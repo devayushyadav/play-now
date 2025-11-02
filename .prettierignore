@@ -1,0 +1,10 @@
+/.vscode
+/node_modules
+# Ignore build output
+/dist
+# Ignore Visual Studio Code settings
+.settings/  
+
+*.env
+.env
+.env.*
