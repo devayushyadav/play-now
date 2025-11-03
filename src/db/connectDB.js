@@ -4,11 +4,7 @@ import { DB_NAME } from "../constants.js";
 export const connectDB = async () => {
   try {
     const connection = await mongoose.connect(
-      `${process.env.MONGODB_URI}/${DB_NAME}`,
-      {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      }
+      `${process.env.MONGODB_URI}/${DB_NAME}`
     );
 
     console.log(connection.connection.host);
@@ -16,6 +12,5 @@ export const connectDB = async () => {
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
     process.exit(1);
-    throw error;
   }
 };
