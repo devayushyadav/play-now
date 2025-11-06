@@ -27,4 +27,11 @@ app.use(
 app.use(cookieParser());
 // Middleware to parse cookies attached to incoming requests and populate req.cookies with the parsed cookies.
 
+/*-------------------------------------------------Routes would be added here----------------------------------------------------*/
+// Imports
+import userRoutes from "./routes/user.routes.js";
+
+// Declaration of Routes
+app.use("/api/v1/users", userRoutes);
+
 export default app;

@@ -24,3 +24,5 @@ const asyncHandlerPromise = (func) => {
     Promise.resolve(func(req, res, next)).reject(next);
   };
 };
+
+export { asyncHandler };
