@@ -9,7 +9,7 @@ cloudinary.config({
 
 // CLOUDINARY_URL=cloudinary://<API_KEY>:<API_SECRET>@<CLOUD_NAME>
 
-const uploadOnCLoudinary = async (filePath) => {
+const uploadOnCloudinary = async (filePath) => {
   try {
     if (!filePath || !fs.existsSync(filePath)) {
       // throw new Error("File does not exist");
@@ -21,7 +21,7 @@ const uploadOnCLoudinary = async (filePath) => {
     });
 
     console.log("Cloudinary upload response:", response);
-
+    fs.unlinkSync(filePath);
     return response;
   } catch (error) {
     fs.unlinkSync(filePath); // delete the local file in case of error
@@ -30,4 +30,4 @@ const uploadOnCLoudinary = async (filePath) => {
   }
 };
 
-export { uploadOnCLoudinary };
+export { uploadOnCloudinary };
