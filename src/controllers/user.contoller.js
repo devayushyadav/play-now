@@ -4,6 +4,25 @@ import { APIError } from "../utils/ApiError.js";
 import { APIResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+const generateAccessAndRefreshToken = async (userID) => {
+  try {
+    const user = await User.findById(userID);
+    if (!user) {
+      throw new APIError(404, "User not found");
+    }
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new APIError(500, "Token generation failed");
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   const { username, email, fullname, password } = req.body;
 
@@ -67,4 +86,84 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new APIResponse(201, "User registered successfully", createdUser));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, username, password } = req.body;
+
+  if (!email || (email.trim() === "" && !username) || username.trim() === "") {
+    throw new APIError(400, "Email or username is required");
+  }
+
+  if (!password || password.trim() === "") {
+    throw new APIError(400, "Password is required");
+  }
+  const user = await User.findOne({
+    $or: [
+      { email: email?.toLowerCase() },
+      { username: username?.toLowerCase() },
+    ],
+  });
+
+  if (!user) {
+    throw new APIError(401, "Invalid credentials");
+  }
+
+  const isPasswordValid = await user.comparePassword(password);
+
+  if (!isPasswordValid) {
+    throw new APIError(401, "Invalid credentials");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+
+  const userData = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+    // sameSite: "Strict",
+    // maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  };
+
+  return res
+    .status(200)
+    .cookie("refreshToken", refreshToken, options)
+    .cookie("accessToken", accessToken, options)
+    .json(
+      new APIResponse(200, "User logged in successfully", {
+        user: userData,
+        accessToken,
+        refreshToken,
+      })
+    );
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    throw new APIError(400, "Refresh token not found");
+  }
+
+  await User.findOneAndUpdate(
+    req.user._id,
+    { $set: { refreshToken: undefined } },
+    { new: true }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", options)
+    .json(new APIResponse(200, "User logged out successfully"));
+});
+
+export { registerUser, loginUser, logoutUser };
