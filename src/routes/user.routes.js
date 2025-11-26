@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   changePassword,
   getCurrentUser,
+  getUserChannelProfile,
+  getWatchHistory,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -27,11 +29,20 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/refresh-access-token").post(refreshAccessToken);
 router.route("/change-password").post(verifyJWT, changePassword);
 router.route("/user").get(verifyJWT, getCurrentUser);
-router.route("/user").post(verifyJWT, updateUserProfile);
-router.route("/update-profile-image").post(verifyJWT, updateUserProfileImage);
-router.route("/update-cover-image").post(verifyJWT, updateUserCoverImage);
-router.route("/refresh-access-token").post(refreshAccessToken);
+
+// use patch other wise it will replace the whole user object
+router.route("/user").patch(verifyJWT, updateUserProfile);
+router
+  .route("/update-profile-image")
+  .patch(verifyJWT, upload.single("avatar"), updateUserProfileImage);
+router
+  .route("/update-cover-image")
+  .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
+
+router.route("/channel/:username").get(getUserChannelProfile);
+router.route("/watch-history").get(verifyJWT, getWatchHistory);
 
 export default router;
